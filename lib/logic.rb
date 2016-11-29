@@ -1,0 +1,1 @@
+require 'logic/version'
