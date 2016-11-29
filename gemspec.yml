@@ -1,6 +1,6 @@
 name: logic
-summary: "TODO: Summary"
-description: "TODO: Description"
+summary: "logical propositions with blocks"
+description: "logic programming with ruby"
 license: MIT
 authors: Joseph Weissman
 email: jweissman1986@gmail.com
