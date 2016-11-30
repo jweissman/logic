@@ -3,7 +3,7 @@ require 'logic/version'
 module Logic
   class Term
     extend Forwardable
-    def_delegators :to_expression, :negate, :conjoin, :disjoin, :implies
+    def_delegators :to_expression, :describe, :negate, :conjoin, :disjoin, :implies, :reduce, :|, :^, :-@, :>, :~, :!, :=~
   end
 
   class Constant < Term
@@ -18,9 +18,6 @@ module Logic
       ConstantExpression.new(self.name, self.value)
     end
   end
-
-  Truth = Constant.new("T", true)
-  Falsity = Constant.new("F", false)
 
   class Variable < Term
     attr_reader :name
@@ -47,35 +44,47 @@ module Logic
       raise "TODO implement #reduce for this kind of expression (#{self.class.name})"
     end
 
-    # def to_s
-    #   name
-    # end
-    #
-    # def inspect
-    #   describe
-    # end
+    def to_s
+      name
+    end
 
-    # expressions are considered 'equal' if satisfiers are equivalent
-    # note this has weird effect that all tautologically-false statements are equivalent
+    def inspect
+      describe
+    end
+
+    # structural-equivalence
     def ==(other)
+      reduce.name == other.reduce.name
+    end
+
+    # truth-functional equivalence
+    # (expressions are considered 'equal' if satisfiers [truth table] are equivalent)
+    def match(other)
       satisfiers == other.satisfiers
     end
+    alias :=~ :match
 
     def negate
       NegatedExpression.new(self)
     end
+    alias :-@ :negate
+    alias :~ :negate
+    alias :! :negate
 
     def conjoin(other)
       ConjoinedExpression.new(self, expressionize(other))
     end
+    alias :^ :conjoin
 
     def disjoin(other)
       DisjoinedExpression.new(self, expressionize(other))
     end
+    alias :| :disjoin
 
     def implies(other)
       ConditionalExpression.new(self, expressionize(other))
     end
+    alias :> :implies
 
     def bind(env)
       BoundExpression.new(self, env)
@@ -179,6 +188,10 @@ module Logic
     def evaluate(*)
       value
     end
+
+    def reduce(*)
+      self
+    end
   end
 
   class SimpleExpression < Expression
@@ -211,12 +224,8 @@ module Logic
       end
     end
 
-    def lift_bool(true_or_false)
-      if true_or_false
-        Truth.to_expression
-      else
-        Falsity.to_expression
-      end
+    def lift_bool(b)
+      b ? Truth : Falsity
     end
 
     private
@@ -224,6 +233,8 @@ module Logic
   end
 
   class NegatedExpression < Expression
+    attr_reader :expression
+
     def initialize(expression)
       @expression = expression
     end
@@ -244,14 +255,33 @@ module Logic
       !expression.evaluate(env)
     end
 
-    private
-    attr_reader :expression
+    def reduce(env={})
+      expr = @expression.reduce(env)
+      if expr == Truth
+        Falsity
+      elsif expr == Falsity
+        Truth
+      elsif @expression.is_a?(NegatedExpression)
+        @expression.expression # involute
+      else
+        expr.negate
+      end
+    end
   end
 
   class BoundExpression < Expression
     def initialize(expression, env={})
       @expression = expression
       @context = env
+    end
+
+    def name
+      @expression.name + " [#{@context.map { |k,v| k.to_s + '=' + v.to_s }.join(',')}]"
+    end
+
+    def describe
+      @expression.describe + " [#{@context.map { |k,v| k.to_s + '=' + v.to_s }.join(',')}]"
+      # "#{parenthesize @left.describe} #{operator_description} #{parenthesize @right.describe}"
     end
 
     def context
@@ -306,7 +336,12 @@ module Logic
 
   class ConjoinedExpression < BinaryExpression
     def evaluate(env={})
-      @left.evaluate(env) && @right.evaluate(env)
+      reduced = reduce(env)
+      if reduced.is_a?(ConjoinedExpression)
+        @left.evaluate(env) && @right.evaluate(env)
+      else
+        reduced.evaluate(env)
+      end
     end
 
     def operator_glyph
@@ -318,22 +353,29 @@ module Logic
     end
 
     def reduce(env={})
-      if (@right.reduce(env)) == Truth.to_expression
-        @left.reduce(env)
-      elsif (@right.reduce(env)) == Falsity.to_expression
-        Falsity.to_expression
-      elsif (@right.is_a?(DisjoinedExpression) && @right.left == @left)
-        @left
+      l,r = @left.reduce(env), @right.reduce(env)
+      if r == Truth
+        l
+      elsif r == Falsity
+        Falsity
+      elsif (r.is_a?(DisjoinedExpression) && r.left.reduce(env) == l)
+        l
+      elsif l == r.negate
+        Falsity
       else
         self
-        # Falsity.to_expression
       end
     end
   end
 
   class DisjoinedExpression < BinaryExpression
     def evaluate(env={})
-      @left.evaluate(env) || @right.evaluate(env)
+      reduced = reduce(env)
+      if reduced.is_a?(DisjoinedExpression)
+        @left.evaluate(env) || @right.evaluate(env)
+      else
+        reduced.evaluate(env)
+      end
     end
 
     def operator_glyph
@@ -345,11 +387,15 @@ module Logic
     end
 
     def reduce(env={})
-      if @right.reduce(env) == Falsity.to_expression
+      if @right.reduce(env) == Falsity
         @left.reduce(env)
-      elsif @right.reduce(env) == Truth.to_expression
-        Truth.to_expression
+      elsif @right.reduce(env) == Truth
+        Truth
       elsif (@right.is_a?(ConjoinedExpression) && @right.left == @left)
+        @left
+      elsif @left == @right.negate
+        Truth
+      elsif @left == @right
         @left
       else
         self
@@ -359,7 +405,18 @@ module Logic
 
   class ConditionalExpression < BinaryExpression
     def evaluate(env={})
-      @left.negate.disjoin(@right).evaluate(env)
+      @left.reduce(env).negate.disjoin(@right.reduce(env)).evaluate(env)
+    end
+
+    def reduce(env={})
+      l,r = @left.reduce(env), @right.reduce(env)
+      if l == Truth
+        r
+      elsif r.is_a?(ConditionalExpression) # currying!
+        ConditionalExpression.new(l.conjoin(r.left), r.right)
+      else
+        self
+      end
     end
 
     def operator_glyph
@@ -370,4 +427,7 @@ module Logic
       'then'
     end
   end
+
+  Truth = Constant.new("T", true).to_expression.freeze
+  Falsity = Constant.new("F", false).to_expression.freeze
 end

@@ -8,30 +8,30 @@ describe Logic do
   let(:y) { Variable.new('y') }
   let(:z) { Variable.new('z') }
 
-  context 'according to the monotone laws:' do
+  context 'follows monotone laws:' do
     describe 'conjunction' do
-      it 'has an identity (true)' do
+      it 'has an identity (Truth)' do
         expect(x.conjoin(y).bind(y: true).reduce).to eq(x.to_expression)
       end
 
-      it 'has an annihilator (false)' do
-        expect(x.conjoin(y).bind(y: false).reduce).to eq(Falsity.to_expression)
+      it 'has an annihilator (False)' do
+        expect(x.conjoin(y).bind(y: false).reduce).to be(Falsity)
       end
 
       it 'is associative' do
-        expect(x.conjoin(y.conjoin(z))).to eq((x.conjoin(y)).conjoin(z))
+        expect(x.conjoin(y.conjoin(z))).to match (x.conjoin(y)).conjoin(z)
       end
 
       it 'is commutative' do
-        expect(x.conjoin(y)).to eq(y.conjoin(x))
+        expect(x.conjoin(y)).to match (y.conjoin(x))
       end
 
       it 'is idempotent' do
-        expect(x.conjoin(x).reduce).to eq(x.to_expression)
+        expect(x.conjoin(x).reduce).to match(x.to_expression)
       end
 
       it 'is distributive over disjunction' do
-        expect(x.conjoin(y.disjoin(z))).to eq((x.conjoin(y)).disjoin(x.conjoin(z)))
+        expect(x.conjoin(y.disjoin(z))).to match((x.conjoin(y)).disjoin(x.conjoin(z)))
       end
 
       it 'absorbs disjunctions' do
@@ -40,16 +40,16 @@ describe Logic do
     end
 
     describe 'disjunction' do
-      it 'has an identity (false)' do
+      it 'has an identity (False)' do
         expect(x.disjoin(y).bind(y: false).reduce).to eq(x.to_expression)
       end
 
-      it 'has an annihilator (true)' do
-        expect(x.disjoin(y).bind(y: true).reduce).to eq(Truth.to_expression)
+      it 'has an annihilator (True)' do
+        expect(x.disjoin(y).bind(y: true).reduce).to be(Truth)
       end
 
       it 'is associative' do
-        expect(x.disjoin(y.disjoin(z))).to eq((x.disjoin(y)).disjoin(z))
+        expect(x.disjoin(y.disjoin(z))).to match((x.disjoin(y)).disjoin(z))
       end
 
       it 'is idempotent' do
@@ -57,16 +57,53 @@ describe Logic do
       end
 
       it 'is commutative' do
-        expect(x.disjoin(y)).to eq(y.disjoin(x))
+        expect(x.disjoin(y)).to match(y.disjoin(x))
       end
 
       it 'is distributive over conjunction' do
-        expect(x.disjoin(y.conjoin(z))).to eq((x.disjoin(y)).conjoin(x.disjoin(z)))
+        expect(x.disjoin(y.conjoin(z))).to match((x.disjoin(y)).conjoin(x.disjoin(z)))
       end
 
       it 'absorbs conjunctions' do
         expect(x.disjoin(x.conjoin(y)).reduce).to eq(x.to_expression)
       end
+    end
+  end
+
+  context 'follows non-monotone laws:' do
+    describe 'complementation' do
+      it 'resolves to falsity under conjunction' do
+        expect(x.conjoin(x.negate).reduce).to be(Falsity)
+
+        # should eval even without context
+        expect(x.conjoin(x.negate).evaluate).to be(false)
+      end
+
+      it 'resolves to truth under disjunction' do
+        expect(x.disjoin(x.negate).reduce).to be(Truth)
+
+        # eval w/o context
+        expect(x.disjoin(x.negate).evaluate).to be(true)
+      end
+
+      it 'involutes' do
+        expect(x.negate.negate).to eq(x.to_expression)
+      end
+
+      it 'follows De Morgan' do
+        expect((x.negate).conjoin(y.negate)).to match(x.disjoin(y).negate)
+        expect((x.negate).disjoin(y.negate)).to match(x.conjoin(y).negate)
+      end
+    end
+  end
+
+  context 'material implication' do
+    it 'resolves if environment contains premise' do
+      expect(x.implies(y).bind(x: true).reduce).to eq(y.to_expression)
+    end
+
+    it 'is curried' do
+      expect(x.implies(y.implies(z)).reduce).to eq(x.conjoin(y).implies(z))
     end
   end
 end
