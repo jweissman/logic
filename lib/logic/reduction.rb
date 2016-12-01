@@ -1,20 +1,43 @@
 module Logic
   module Reduction
-    # okay, this works but we could ask for tautologies in terms of expressions
-    # rather than free variables... and do the search recursively?
     def simplify(expr, env={})
-      # try to match tautologies instead of all this boilerplate!!
-      theorems = tautologies_for(expr.free_variables)
+      simplifying_theorem = simplifying_theorem_for(expr)
+      if simplifying_theorem
+        simplifying_theorem.right
+      else
+        expr
+      end
+    end
 
-      theorems.inject(expr) do |res, rule|
-        # p [ :simplify, apply: rule ]
-        l, r = rule.left, rule.right
-        if res.name == l.name
-          # p [ :rewrite, was: res, now: r ]
-          r
-        else
-          res
-        end
+    def simplifying_theorem_for(expr)
+      subexpressions = subexpressions_for(expr) - [expr]
+      theorems = tautologies_for(subexpressions)
+      theorems.detect do |rule|
+        expr.name == rule.left.name
+      end
+    end
+
+    def subexpressions_for(expr)
+      subexpressions = [expr]
+
+      if expr.is_a?(BinaryExpression)
+        subexpressions.push(subexpressions_for(expr.left))
+        subexpressions.push(subexpressions_for(expr.right))
+      elsif expr.is_a?(NegatedExpression) || expr.is_a?(BoundExpression)
+        subexpressions.push(subexpressions_for(expr.expression))
+      end
+
+      subexpressions.flatten.uniq
+    end
+
+    def tautologies_for(expressions)
+      expressions.permutation.lazy.flat_map do |expression_permutation|
+        x,y,z = *expression_permutation
+        tautologies = []
+        tautologies += single_variable_axioms(x) if x
+        tautologies += two_variable_axioms(x,y) if x && y
+        tautologies += three_variable_axioms(x,y,z) if x && y && z
+        tautologies
       end
     end
 
@@ -69,21 +92,6 @@ module Logic
         # curry
         x > y > z > ((x ^ y) > z),
       ]
-    end
-
-    def tautologies_for(var_names)
-      var_expressions = var_names.map do |name|
-        VariableExpression.new(name)
-      end
-
-      var_expressions.permutation.flat_map do |variable_expressions|
-        x,y,z = *variable_expressions
-        tautologies = []
-        tautologies += single_variable_axioms(x) if x
-        tautologies += two_variable_axioms(x,y) if x && y
-        tautologies += three_variable_axioms(x,y,z) if x && y && z
-        tautologies
-      end
     end
   end
 end

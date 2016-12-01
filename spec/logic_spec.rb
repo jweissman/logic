@@ -110,4 +110,17 @@ describe Logic do
       expect(x.iff(y)).to match(y.iff(x))
     end
   end
+
+  context 'symbolic analysis' do
+    let(:a) { VariableExpression.new('a') }
+    let(:b) { VariableExpression.new('b') }
+    let(:c) { VariableExpression.new('c') }
+
+    it 'should reduce subexpressions according to axioms' do
+      bc = b ^ c
+      yz = y | z
+
+      expect(((bc > yz) ^ bc).reduce).to eq(yz)
+    end
+  end
 end
