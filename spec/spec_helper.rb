@@ -1,4 +1,5 @@
 require 'rspec'
-require 'logic/version'
+require 'pry'
+require 'logic'
 
 include Logic

@@ -1,7 +1,3 @@
-require 'logic/version'
-require 'logic/satisfaction'
-require 'logic/reduction'
-
 module Logic
   class Expression
     include Satisfaction
@@ -13,6 +9,10 @@ module Logic
 
     def describe
       name
+    end
+
+    def reduce(env={})
+      raise "TODO implement #reduce for this kind of expression (#{self.class.name})"
     end
 
     def to_s
@@ -74,16 +74,16 @@ module Logic
       can_fulfill?(self)
     end
 
+    def context
+      {}
+    end
+
     def solve
       solutions(self)
     end
 
     def reduce(env={})
       simplify(self, env)
-    end
-
-    def context
-      {}
     end
 
     protected
@@ -97,11 +97,11 @@ module Logic
 
     private
     def logic_symbols
-      %w[ ^ v ~ -> ]
+      %w[ ^ v ~ -> <-> ]
     end
 
     def logic_words
-      %w[ and or not then ]
+      %w[ and or not then iff ]
     end
   end
 
@@ -232,7 +232,7 @@ module Logic
     end
 
     def operator_glyph
-      raise "override #operator_glyph in #{self.class.name}"
+      raise "override #operator_name in #{self.class.name}"
     end
 
     def operator_description
@@ -284,10 +284,10 @@ module Logic
 
   class BiconditionalExpression < BinaryExpression
     def evaluate(env={})
-      @left.implies(@right).conjoin(@right.implies(@left)).evaluate(env)
+      @left.implies(@right).conjoin(@right.implies(@left))
     end
 
-    def operator_glyph
+    def operator_glypt
       '<->'
     end
 
