@@ -31,6 +31,10 @@ module Logic
           # 'resolution'
           x ^ -x > Falsity,
           x | -x > Truth,
+
+          # self-implication resolves to T
+          (x > x) > Truth,
+
         ]
       end
 
@@ -39,7 +43,7 @@ module Logic
           # modus ponens
           (x > y) ^ x > y,
 
-          # conjunction absorbs dijunctions
+          # conjunction absorbs disjunctions
           x ^ (x | y) > x,
 
           # disjunction absorbs conjunctions
@@ -51,6 +55,9 @@ module Logic
         [
           # curry
           x > y > z > ((x ^ y) > z),
+
+          # universal quantification modus ponens
+          ( Logic.all(y).are(z) ).conjoin( x.is_a(y) ).implies( x.is_a(z) ).implies(Truth),
         ]
       end
     end

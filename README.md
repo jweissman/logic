@@ -36,7 +36,7 @@ Logic is a logic programming framework for Ruby.
 
     # simplify
     ((a > b) ^ a).reduce
-    => b
+    # => b
 
 ## Requirements
 

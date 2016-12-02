@@ -1,6 +1,6 @@
 module Logic
   class BinaryExpression < Expression
-    attr_reader :left, :right
+    attr_accessor :left, :right
 
     def initialize(left, right)
       raise unless left.is_a?(Expression) && right.is_a?(Expression)

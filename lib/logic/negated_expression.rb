@@ -1,6 +1,6 @@
 module Logic
   class NegatedExpression < Expression
-    attr_reader :expression
+    attr_accessor :expression
 
     def initialize(expression)
       @expression = expression

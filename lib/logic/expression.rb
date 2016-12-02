@@ -55,8 +55,8 @@ module Logic
     end
     alias :% :iff
 
-    def bind(env)
-      BoundExpression.new(self, env)
+    def bind(ctx)
+      BoundExpression.new(self, ctx)
     end
 
     def free_variables
@@ -71,12 +71,20 @@ module Logic
       Satisfaction.solutions(self)
     end
 
-    def reduce(env={})
-      Reduction.simplify(self, env)
+    def reduce
+      Reduction.simplify(self)
+    end
+
+    def evaluate(*)
+      raise "TODO Implement #evaluate for expression type #{self.class.name}"
     end
 
     def context
       {}
+    end
+
+    def is_a(predicate)
+      PredicateQuery.new(predicate, self)
     end
 
     protected

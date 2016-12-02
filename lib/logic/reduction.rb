@@ -2,6 +2,14 @@ module Logic
   module Reduction
     class << self
       def simplify(expr, env={})
+        if expr.is_a?(BinaryExpression)
+          expr.left = simplify(expr.left)
+          expr.right = simplify(expr.right)
+        elsif expr.is_a?(NegatedExpression) || expr.is_a?(BoundExpression)
+          expr.expression = simplify(expr.expression)
+        end
+
+        p [ :simplify, expr: expr ]
         simplifying_theorem = simplifying_theorem_for(expr)
         if simplifying_theorem
           simplifying_theorem.right
@@ -12,9 +20,17 @@ module Logic
 
       private
       def simplifying_theorem_for(expr)
+        return if expr.is_a?(VariableExpression) || expr.is_a?(ConstantExpression)
+
         subexpressions = (subexpressions_for(expr) - [expr]).uniq
+        # p [ :subexpressions, expr: expr, subexpressions: subexpressions ]
         theorems = tautologies_for(subexpressions)
-        theorems.detect { |rule| expr.name == rule.left.name }
+        p [ :simplify, subexpressions: subexpressions, theorems_to_analyze: theorems.count ]
+        # binding.pry if theorems.count > 10_000
+        theorems.detect do |rule|
+          # p [ :simplify, expr: expr, rule: rule ] #theorems_to_analyze: theorems.count ]
+          expr.name == rule.left.name # || expr.name == rule
+        end
       end
 
       def subexpressions_for(expr)
@@ -24,6 +40,9 @@ module Logic
           subexpressions.push(subexpressions_for(expr.left))
           subexpressions.push(subexpressions_for(expr.right))
         elsif expr.is_a?(NegatedExpression) || expr.is_a?(BoundExpression)
+          subexpressions.push(subexpressions_for(expr.expression))
+        elsif expr.is_a?(PredicateQuery)
+          subexpressions.push(subexpressions_for(expr.predicate))
           subexpressions.push(subexpressions_for(expr.expression))
         end
 

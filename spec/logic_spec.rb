@@ -1,6 +1,4 @@
 require 'spec_helper'
-require 'pry'
-require 'logic'
 
 describe Logic do
   # cf https://en.wikipedia.org/wiki/Boolean_algebra#Laws
@@ -27,7 +25,7 @@ describe Logic do
       end
 
       it 'is idempotent' do
-        expect(x.conjoin(x).reduce).to match(x)
+        expect(x.conjoin(x).reduce).to eq(x)
       end
 
       it 'is distributive over disjunction' do
@@ -121,6 +119,37 @@ describe Logic do
       yz = y | z
 
       expect(((bc > yz) ^ bc).reduce).to eq(yz)
+    end
+
+    # rly slow
+    xit 'should reduce inner expressions' do
+      bx = b ^ x
+      cy = c | y
+      expect((~~(bx > cy) ^ bx).reduce).to eq(cy)
+    end
+  end
+
+  context 'predication and quantification' do
+    let(:human) { PredicateExpression.new('human') }
+    let(:mortal) { PredicateExpression.new('mortal') }
+
+    let(:socrates) do
+      SimpleObjectExpression.new('socrates')
+    end
+
+    # should be tautological and follow symbolically as long as `human[socrates]` is an expression
+    # basically a wiring test
+    it 'realizes a predicate implies itself (like anything else)' do
+      expect(socrates.is_a(human).implies(socrates.is_a(human)))
+    end
+
+    # okay, here we go :)
+    it 'should syllogize' do
+      major = Logic.all(human).are(mortal)
+      minor = socrates.is_a(human)
+      conclusion = socrates.is_a(mortal)
+      syllogism = (major ^ minor).implies(conclusion)
+      expect( syllogism.reduce ).to eq(Truth)
     end
   end
 end

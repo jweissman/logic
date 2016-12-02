@@ -17,15 +17,12 @@ module Logic
     end
 
     def evaluate(env={})
-      raise "Env (#{env}) does not contain term #{term.name}" unless env.include?(name.to_sym)
+      raise "Env (#{env}) does not contain term #{name.to_sym}" unless env.include?(name.to_sym)
       env[name.to_sym]
     end
 
     def lift_bool(b)
       b ? Truth : Falsity
     end
-
-    private
-    attr_reader :term
   end
 end

@@ -12,6 +12,10 @@ require 'logic/disjoined_expression'
 require 'logic/conditional_expression'
 require 'logic/biconditional_expression'
 require 'logic/axioms'
+require 'logic/predicate_expression'
+require 'logic/quantified_expression'
+require 'logic/simple_object_expression'
+require 'logic/environment'
 
 module Logic
   Truth = ConstantExpression.new("T", true).freeze
