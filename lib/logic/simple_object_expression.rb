@@ -7,9 +7,5 @@ module Logic
     def name
       @name
     end
-
-    def evaluate(env={})
-      self
-    end
   end
 end

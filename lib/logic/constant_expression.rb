@@ -11,10 +11,6 @@ module Logic
       []
     end
 
-    def evaluate(*)
-      value
-    end
-
     def reduce(*)
       self
     end

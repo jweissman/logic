@@ -1,6 +1,13 @@
 module Logic
   module Axioms
     class << self
+      def no_variable
+        [
+          ~Truth > Falsity,
+          ~Falsity > Truth
+        ]
+      end
+
       # lists of 'theorematic' expressions describing some reduction rules
       def single_variable(x)
         [

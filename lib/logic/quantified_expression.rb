@@ -4,10 +4,6 @@ module Logic
       @predicate = predicate
       @expression = expression
     end
-
-    def evaluate(*)
-      self
-    end
   end
 
   class UniversallyQuantifiedExpression < QuantifiedExpression
@@ -38,16 +34,6 @@ module Logic
 
     def are(expression)
       @klass.new(@predicate, expression)
-    end
-  end
-
-  class << self
-    def all(predicate)
-      QuantifierBuilder.new(UniversallyQuantifiedExpression, predicate)
-    end
-
-    def some(predicate)
-      QuantifierBuilder.new(ExistentiallyQualifiedExpression, predicate)
     end
   end
 end

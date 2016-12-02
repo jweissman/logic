@@ -24,10 +24,10 @@ describe Expression do
   end
 
   it 'can bind variables' do
-    expect(a.bind(a: false).evaluate).to eq(false)
-    expect(b.bind(b: true).evaluate).to eq(true)
-    expect(a.conjoin(b).bind(a: true, b: true).evaluate).to eq(true)
-    expect(a.conjoin(b).bind(a: true, b: false).evaluate).to eq(false)
+    expect(a.bind(a: false).evaluate.reduce).to eq(Falsity)
+    expect(b.bind(b: true).evaluate.reduce).to eq(Truth)
+    expect(a.conjoin(b).bind(a: true, b: true).evaluate.reduce).to eq(Truth)
+    expect(a.conjoin(b).bind(a: true, b: false).evaluate.reduce).to eq(Falsity)
   end
 
   it 'can be satisfied' do
@@ -35,10 +35,21 @@ describe Expression do
     expect(a.conjoin(a.negate).satisfiable?).to eq(false)
   end
 
-  it 'can identify satisfying cases' do
-    expect(a.solve).to eq([{a: true}])
-    expect(a.conjoin(a.negate).solve).to eq([])
-    expect(a.implies(b).negate.solve).to eq([{a: true, b: false}])
-    expect(a.disjoin(b).solve).to eq([{a: true, b: true}, {a: true, b: false}, {a: false, b: true}])
+  context 'identifying satisfying cases' do
+    it 'can solve a simple single-variable expression' do
+      expect(a.solve).to eq([{a: true}])
+    end
+
+    it 'can solve a tautologically-false single-variable expression' do
+      expect(a.conjoin(a.negate).solve).to eq([])
+    end
+
+    it 'can solve a negated implication' do
+      expect((a.implies(b)).negate.solve).to eq([{a: true, b: false}])
+    end
+
+    it 'can solve a disjunction' do
+      expect(a.disjoin(b).solve).to eq([{a: true, b: true}, {a: true, b: false}, {a: false, b: true}])
+    end
   end
 end

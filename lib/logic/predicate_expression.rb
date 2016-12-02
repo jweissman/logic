@@ -14,10 +14,6 @@ module Logic
     def describe
       "#{@expression.name} is a #{@predicate.name}"
     end
-
-    def evaluate(*)
-      self
-    end
   end
 
   # predicates have arbitrary arity...

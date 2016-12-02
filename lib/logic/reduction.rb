@@ -9,7 +9,7 @@ module Logic
           expr.expression = simplify(expr.expression)
         end
 
-        p [ :simplify, expr: expr ]
+        # p [ :simplify, expr: expr ]
         simplifying_theorem = simplifying_theorem_for(expr)
         if simplifying_theorem
           simplifying_theorem.right
@@ -23,13 +23,9 @@ module Logic
         return if expr.is_a?(VariableExpression) || expr.is_a?(ConstantExpression)
 
         subexpressions = (subexpressions_for(expr) - [expr]).uniq
-        # p [ :subexpressions, expr: expr, subexpressions: subexpressions ]
         theorems = tautologies_for(subexpressions)
-        p [ :simplify, subexpressions: subexpressions, theorems_to_analyze: theorems.count ]
-        # binding.pry if theorems.count > 10_000
         theorems.detect do |rule|
-          # p [ :simplify, expr: expr, rule: rule ] #theorems_to_analyze: theorems.count ]
-          expr.name == rule.left.name # || expr.name == rule
+          expr.name == rule.left.name
         end
       end
 
@@ -50,7 +46,7 @@ module Logic
       end
 
       def tautologies_for(expressions)
-        expressions.permutation.lazy.flat_map do |expression_permutation|
+        Axioms.no_variable + expressions.permutation.flat_map do |expression_permutation|
           x,y,z = *expression_permutation
           tautologies = []
           tautologies += Axioms.single_variable(x) if x

@@ -1,6 +1,7 @@
 require 'logic/version'
 require 'logic/satisfaction'
 require 'logic/reduction'
+require 'logic/evaluation'
 require 'logic/expression'
 require 'logic/constant_expression'
 require 'logic/variable_expression'
@@ -15,7 +16,6 @@ require 'logic/axioms'
 require 'logic/predicate_expression'
 require 'logic/quantified_expression'
 require 'logic/simple_object_expression'
-require 'logic/environment'
 
 module Logic
   Truth = ConstantExpression.new("T", true).freeze
@@ -24,5 +24,13 @@ module Logic
   def prelude!
     @_prelude = {}
     %w[ a b c d t u v w x y z ].map { |letter| define_method(letter.to_sym) { @_prelude[letter] ||= VariableExpression.new(letter) } } #method(:new))
+  end
+
+  def all(predicate)
+    QuantifierBuilder.new(UniversallyQuantifiedExpression, predicate)
+  end
+
+  def some(predicate)
+    QuantifierBuilder.new(ExistentiallyQualifiedExpression, predicate)
   end
 end

@@ -132,6 +132,7 @@ describe Logic do
   context 'predication and quantification' do
     let(:human) { PredicateExpression.new('human') }
     let(:mortal) { PredicateExpression.new('mortal') }
+    let(:philosopher) { PredicateExpression.new('philosopher') }
 
     let(:socrates) do
       SimpleObjectExpression.new('socrates')
@@ -144,12 +145,22 @@ describe Logic do
     end
 
     # okay, here we go :)
-    it 'should syllogize' do
-      major = Logic.all(human).are(mortal)
-      minor = socrates.is_a(human)
-      conclusion = socrates.is_a(mortal)
-      syllogism = (major ^ minor).implies(conclusion)
-      expect( syllogism.reduce ).to eq(Truth)
+    describe 'syllogies' do
+      it 'should know socrates is a mortal' do
+        major = Logic.all(human).are(mortal)
+        minor = socrates.is_a(human)
+        conclusion = socrates.is_a(mortal)
+        syllogism = (major ^ minor).implies(conclusion)
+        expect( syllogism.reduce ).to eq(Truth)
+      end
+
+      xit 'should resolve a fully quantified syllogism' do
+        major = Logic.all(human).are(philosopher)
+        minor = Logic.all(philosopher).are(mortal)
+        conclusion = Logic.all(human).are(mortal)
+        syllogism = (major ^ minor).implies(conclusion)
+        expect( syllogism.reduce ).to eq(Truth)
+      end
     end
   end
 end

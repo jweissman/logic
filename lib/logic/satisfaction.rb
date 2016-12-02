@@ -2,23 +2,7 @@ module Logic
   module Satisfaction
     class << self
       def can_fulfill?(expression)
-        if expression.free_variables.any?
-          # pick off free variables recursively?
-          var_to_bind = expression.free_variables.first
-          var_key = var_to_bind.to_sym
-
-          # try true path first...
-          bound_true = expression.bind(var_key => true)
-          return true if can_fulfill?(bound_true)
-
-          bound_false = expression.bind(var_key => false)
-          return true if can_fulfill?(bound_false)
-
-          false
-        else
-          # no free vars, just eval
-          expression.evaluate
-        end
+        solutions(expression).any?
       end
 
       def solutions(expression)
@@ -40,7 +24,8 @@ module Logic
 
           sat_matches
         else
-          if can_fulfill?(expression)
+          evaluated = expression.evaluate.reduce
+          if evaluated == Truth
             [expression.context]
           else
             []

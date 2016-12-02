@@ -17,9 +17,5 @@ module Logic
     def free_variables
       expression.free_variables
     end
-
-    def evaluate(env={})
-      !expression.evaluate(env)
-    end
   end
 end

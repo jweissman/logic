@@ -75,8 +75,9 @@ module Logic
       Reduction.simplify(self)
     end
 
-    def evaluate(*)
-      raise "TODO Implement #evaluate for expression type #{self.class.name}"
+    def evaluate(ctx={}) #(*)
+      Evaluation.analyze(self, ctx)
+      # raise "TODO Implement #evaluate for expression type #{self.class.name}"
     end
 
     def context
