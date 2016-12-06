@@ -16,7 +16,7 @@ module Logic
           else
             expr
           end
-        elsif expr.is_a?(PredicateExpression) || expr.is_a?(QuantifiedExpression) || expr.is_a?(SimpleObjectExpression)
+        elsif expr.is_a?(PredicateExpression) || expr.is_a?(QuantifiedExpression) || expr.is_a?(SimpleObjectExpression) || expr.is_a?(PredicateQuery)
           # irreducible...
           expr
         else

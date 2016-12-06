@@ -2,7 +2,7 @@ require 'spec_helper'
 
 include Reduction
 describe Reduction do
-  context 'rewrite rules' do
+  context 'reduction rules' do
     let(:a) { VariableExpression.new('a') }
     let(:b) { VariableExpression.new('b') }
     let(:c) { VariableExpression.new('c') }

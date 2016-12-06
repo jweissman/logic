@@ -1,39 +1,75 @@
 module Logic
   class QuantifiedExpression < Expression
-    def initialize(predicate, expression)
+    attr_reader :subject, :predicate, :affirmative
+
+    def initialize(subject, predicate, affirmative: true)
+      @subject = subject
       @predicate = predicate
-      @expression = expression
+      @affirmative = affirmative
+    end
+
+    def free_variables
+      @expression.free_variables
+    end
+
+    def negative?
+      !@affirmative
     end
   end
 
-  class UniversallyQuantifiedExpression < QuantifiedExpression
+  class UniversalExpression < QuantifiedExpression
     def name
-      "{#{@predicate}=>#{@expression}}"
+      "{A<x>.#{subject}[<x>]->#{negative? ? '~' : ''}#{predicate}[<x>]}"
     end
 
     def describe
-      "all #{@predicate} are #{@expression}"
+      if negative?
+        "no #{subject}s are #{predicate}s"
+      else
+        "all #{subject}s are #{predicate}s"
+      end
     end
   end
 
-  class ExistentiallyQualifiedExpression < QuantifiedExpression
+  class ExistentialExpression < QuantifiedExpression
     def name
-      "{#@predicate=>#@expression}"
+      "{E<x>.##{subject}[x]->#{negative? ? '~' : ''}#{predicate}[<x>]}"
     end
 
     def describe
-      "some #@predicate are #@expression"
+      if negative?
+        "some #{subject}s are not #{predicate}s"
+      else
+        "some #{subject}s are #{predicate}s"
+      end
     end
   end
+
+  class IndefiniteExpression < QuantifiedExpression
+    def name
+      "{#{negative? ? '~' : ''}#{predicate}[#{subject}]}"
+    end
+
+    def describe
+      if negative?
+        "#{subject} is not #{predicate}"
+      else
+        "#{subject} is #{predicate}"
+      end
+    end
+  end
+
+  # we could differentiate singular/indefinite but it's all just 'expressions' really
 
   class QuantifierBuilder
-    def initialize(klass, predicate)
+    def initialize(klass, predicate, negate: false)
       @klass = klass
       @predicate = predicate
+      @negate = negate
     end
 
     def are(expression)
-      @klass.new(@predicate, expression)
+      @klass.new(@predicate, expression, affirmative: !@negate)
     end
   end
 end

@@ -11,7 +11,7 @@ module Logic
     end
 
     def describe
-      "not #{expression.describe}"
+      "(not #{expression.describe})"
     end
 
     def free_variables

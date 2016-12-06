@@ -109,19 +109,19 @@ describe Logic do
     end
   end
 
-  context 'symbolic analysis' do
+  # these have become intolerably slow
+  xcontext 'symbolic analysis' do
     let(:a) { VariableExpression.new('a') }
     let(:b) { VariableExpression.new('b') }
     let(:c) { VariableExpression.new('c') }
 
-    it 'should reduce subexpressions according to axioms' do
+    xit 'should reduce subexpressions according to axioms' do
       bc = b ^ c
       yz = y | z
 
       expect(((bc > yz) ^ bc).reduce).to eq(yz)
     end
 
-    # rly slow
     xit 'should reduce inner expressions' do
       bx = b ^ x
       cy = c | y
@@ -130,9 +130,9 @@ describe Logic do
   end
 
   context 'predication and quantification' do
-    let(:human) { PredicateExpression.new('human') }
-    let(:mortal) { PredicateExpression.new('mortal') }
-    let(:philosopher) { PredicateExpression.new('philosopher') }
+    let(:human) { SimpleObjectExpression.new('human') }
+    let(:mortal) { SimpleObjectExpression.new('mortal') }
+    let(:philosopher) { SimpleObjectExpression.new('philosopher') }
 
     let(:socrates) do
       SimpleObjectExpression.new('socrates')
@@ -144,22 +144,37 @@ describe Logic do
       expect(socrates.is_a(human).implies(socrates.is_a(human)))
     end
 
+    it 'should infer that socrates is a mortal' do
+      major = Logic.all(human).are(mortal)
+      minor = socrates.is_a(human)
+      conclusion = socrates.is_a(mortal)
+
+      syllogism = (major ^ minor).implies(conclusion)
+      expect( syllogism.reduce ).to eq(Truth)
+    end
+
     # okay, here we go :)
-    describe 'syllogies' do
-      it 'should know socrates is a mortal' do
-        major = Logic.all(human).are(mortal)
-        minor = socrates.is_a(human)
-        conclusion = socrates.is_a(mortal)
+    context 'quantified syllogies' do
+      it 'should resolve a fully quantified syllogism' do
+        major = Logic.all(human).are(philosopher)
+        minor = Logic.all(philosopher).are(mortal)
+        conclusion = Logic.all(human).are(mortal)
+
         syllogism = (major ^ minor).implies(conclusion)
         expect( syllogism.reduce ).to eq(Truth)
       end
 
-      xit 'should resolve a fully quantified syllogism' do
-        major = Logic.all(human).are(philosopher)
-        minor = Logic.all(philosopher).are(mortal)
-        conclusion = Logic.all(human).are(mortal)
-        syllogism = (major ^ minor).implies(conclusion)
-        expect( syllogism.reduce ).to eq(Truth)
+      let(:valid_syllogisms) do
+        syllogisms_for(human, philosopher, mortal)
+      end
+
+      xit 'should resolve all valid syllogism forms' do
+        valid_syllogisms.each do |syllogism|
+          p [ syllogism: syllogism ]
+          # binding.pry
+          # binding.pry unless syllogism.reduce == Truth
+          expect( syllogism.prove).to eq(Truth)
+        end
       end
     end
   end

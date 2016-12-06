@@ -1,7 +1,15 @@
 module Logic
   module Reduction
     class << self
+      include ExpressionHelper
+
       def simplify(expr, env={})
+        @simplified ||= {}
+        @simplified[env] ||= {}
+        @simplified[env][expr] ||= simplify!(expr, env)
+      end
+
+      def simplify!(expr, env={})
         if expr.is_a?(BinaryExpression)
           expr.left = simplify(expr.left)
           expr.right = simplify(expr.right)
@@ -9,10 +17,13 @@ module Logic
           expr.expression = simplify(expr.expression)
         end
 
-        # p [ :simplify, expr: expr ]
         simplifying_theorem = simplifying_theorem_for(expr)
         if simplifying_theorem
-          simplifying_theorem.right
+          if simplifying_theorem.name == expr.name
+            Truth
+          else
+            simplifying_theorem.right
+          end
         else
           expr
         end
@@ -24,34 +35,20 @@ module Logic
 
         subexpressions = (subexpressions_for(expr) - [expr]).uniq
         theorems = tautologies_for(subexpressions)
+
+        # p [:simplify, expr: expr, theorems: theorems.count]
         theorems.detect do |rule|
-          expr.name == rule.left.name
+          expr.name == rule.left.name || expr.name == rule.name
         end
-      end
-
-      def subexpressions_for(expr)
-        subexpressions = [expr]
-
-        if expr.is_a?(BinaryExpression)
-          subexpressions.push(subexpressions_for(expr.left))
-          subexpressions.push(subexpressions_for(expr.right))
-        elsif expr.is_a?(NegatedExpression) || expr.is_a?(BoundExpression)
-          subexpressions.push(subexpressions_for(expr.expression))
-        elsif expr.is_a?(PredicateQuery)
-          subexpressions.push(subexpressions_for(expr.predicate))
-          subexpressions.push(subexpressions_for(expr.expression))
-        end
-
-        subexpressions.flatten
       end
 
       def tautologies_for(expressions)
         Axioms.no_variable + expressions.permutation.flat_map do |expression_permutation|
           x,y,z = *expression_permutation
           tautologies = []
-          tautologies += Axioms.single_variable(x) if x
-          tautologies += Axioms.two_variable(x,y) if x && y
           tautologies += Axioms.three_variable(x,y,z) if x && y && z
+          tautologies += Axioms.two_variable(x,y) if x && y
+          tautologies += Axioms.single_variable(x) if x
           tautologies
         end
       end

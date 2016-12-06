@@ -72,12 +72,20 @@ module Logic
     end
 
     def reduce
-      Reduction.simplify(self)
+      Reduction.simplify(self.dup)
     end
 
-    def evaluate(ctx={}) #(*)
+    def evaluate(ctx={})
       Evaluation.analyze(self, ctx)
-      # raise "TODO Implement #evaluate for expression type #{self.class.name}"
+    end
+
+    def rewrite #(depth=1)
+      Rewriting.elaborate(self).sort_by { |e| e.name.length }.uniq
+    end
+
+    # reduce/rewrite
+    def prove(conclusion=Truth) #depth=10)
+      Proof.establish(self, conclusion)
     end
 
     def context
@@ -85,7 +93,7 @@ module Logic
     end
 
     def is_a(predicate)
-      PredicateQuery.new(predicate, self)
+      IndefiniteExpression.new(self, predicate)
     end
 
     protected

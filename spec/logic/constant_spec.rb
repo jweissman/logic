@@ -11,7 +11,7 @@ describe ConstantExpression do
   it 'can be negated' do
     expect(not_true).to be_an(Expression)
     expect(not_true.name).to eq('~T')
-    expect(not_true.describe).to eq('not T')
+    expect(not_true.describe).to eq('(not T)')
     expect(not_true.evaluate).to be_falsy
   end
 end

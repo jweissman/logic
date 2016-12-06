@@ -6,13 +6,13 @@ describe Expression do
 
   it 'can be narrated' do
     expect(a.describe).to eq("a")
-    expect(a.negate.describe).to eq("not a")
+    expect(a.negate.describe).to eq("(not a)")
     expect(a.conjoin(a).describe).to eq("a and a")
     expect(a.disjoin(a).describe).to eq("a or a")
     expect(a.implies(a).describe).to eq("a then a")
 
     expect(b.describe).to eq("b")
-    expect(b.implies(a.negate.conjoin(b)).describe).to eq("b then (not a and b)")
+    expect(b.implies(a.negate.conjoin(b)).describe).to eq("b then ((not a) and b)")
   end
 
   it 'can identify free variables' do
